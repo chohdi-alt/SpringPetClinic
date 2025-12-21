@@ -1,70 +1,87 @@
 pipeline {
-	agent any
-	
-	tools {
-		maven 'Maven'
-		jdk 'Jdk17'
-	}
+    agent any
 
-	environment {
-		APP_Port = '8081'
-	}
+    tools {
+        maven 'Maven'
+        jdk 'Jdk17'
+    }
 
-	stages {
-		stage('START') {
-			steps {
-				echo 'Pipelined started'
-			}
-		}
-		
-		stage('CHECKOUT') {
-			steps {
-				checkout scm
-			}
-		}
+    environment {
+        APP_PORT = '8081'
+    }
 
-		stage('BUILD') {
-			steps {
-				sh 'mvn clean compile'
-			}
-		}
-		stage('SOANRQUBE ANALYSIS') {
-			steps {
-				withSonarQubeEnv('SonarQube') {
-					sh 'mvn sonar:sonar'
-				}
-			}
-		}
-		stage('START APPLICATION') {
-			steps {
-				sh '''
-					nohup mcn spring-boot:run -Dspring-boot.run.arguments=--server.port=8081 > app.log 2>&1 & slepp 25
-				'''
-			}
-		}
+    stages {
 
-		stage('SELENIUM TESTS') {
-			steps {
-				sh 'mvn test'
-			}
-		}
+        stage('START') {
+            steps {
+                echo 'Pipeline started'
+            }
+        }
 
-		stage('END') {
-			steps {
-				echo 'Pipeline finished successfully'
-			}
-		}
-	}
-	
-	post {
-		always {
-			junit 'target/surefire-reports/*.xml'
-		}
-		failure {
-			echo 'Pipeline failed'
-		}
-		success {
-			echo 'Pipeline succeded'
-		}
-	}
+        stage('CHECKOUT') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('BUILD') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+
+        stage('START APPLICATION') {
+            steps {
+                sh '''
+                nohup mvn spring-boot:run \
+                  -Dspring-boot.run.arguments=--server.port=${APP_PORT} \
+                  > app.log 2>&1 &
+                '''
+            }
+        }
+
+        stage('WAIT FOR APP') {
+            steps {
+                sh '''
+                echo "Waiting for app..."
+                for i in {1..30}; do
+                  curl -s http://localhost:${APP_PORT} && break
+                  sleep 2
+                done
+                '''
+            }
+        }
+
+        stage('SELENIUM TESTS') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('SONARQUBE ANALYSIS') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
+        stage('STOP APPLICATION') {
+            steps {
+                sh 'pkill -f spring-boot || true'
+            }
+        }
+
+        stage('END') {
+            steps {
+                echo 'Pipeline finished'
+            }
+        }
+    }
 }
+
