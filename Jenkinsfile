@@ -1,12 +1,41 @@
 pipeline {
 	agent any
-	
+
 	stages {
-		stage('Clone Repository') {
+		stage('START') {
 			steps {
-				echo 'Repository cloned successfully'
-				sh 'ls -la'
+				echo 'Pipelined started'
 			}
+		}
+		
+		stage('CHECKOUT') {
+			steps {
+				checkout scm
+			}
+		}
+
+		stage('BUILD') {
+			steps {
+				sh 'mvn clean test'
+			}
+		}
+
+		stage('END') {
+			steps {
+				echo 'Pipeline finished successfully'
+			}
+		}
+	}
+	
+	post {
+		always {
+			junit 'target/surefire-reports/*.xml'
+		}
+		failure {
+			echo 'Pipeline failed'
+		}
+		success {
+			echo 'Pipeline succeded'
 		}
 	}
 }
