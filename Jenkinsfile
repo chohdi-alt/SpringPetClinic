@@ -38,10 +38,7 @@ pipeline {
 		stage('START APPLICATION') {
 			steps {
 				sh '''
-					nohup mcn spring-boot:run \
-						-Dspring-boot.run.arguments=--server.port=8081 \
-						> app.log 2>&1 & 
-						slepp 25
+					nohup mcn spring-boot:run -Dspring-boot.run.arguments=--server.port=8081 > app.log 2>&1 & slepp 25
 				'''
 			}
 		}
