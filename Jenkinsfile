@@ -8,6 +8,8 @@ pipeline {
 
     environment {
         APP_PORT = '8081'
+	DOCKER_IMAGE = "chohdigsaeir/springpetclinic"
+        DOCKER_TAG   = "latest"
     }
 
     stages {
@@ -67,6 +69,29 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh 'mvn sonar:sonar'
+                }
+            }
+        }
+	
+	stage('DOCKER BUILD') {
+            steps {
+                sh '''
+                    docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                '''
+            }
+        }
+
+	stage('DOCKER PUSH') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_TOKEN'
+                )]) {
+                    sh '''
+                        echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    '''
                 }
             }
         }
