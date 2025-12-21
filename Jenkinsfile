@@ -1,5 +1,14 @@
 pipeline {
 	agent any
+	
+	tools {
+		maven 'Maven'
+		jdk'JDk17'
+	}
+
+	environment {
+		APP_Port = '8081'
+	}
 
 	stages {
 		stage('START') {
@@ -16,7 +25,7 @@ pipeline {
 
 		stage('BUILD') {
 			steps {
-				sh 'mvn clean test'
+				sh 'mvn clean compile'
 			}
 		}
 		stage('SOANRQUBE ANALYSIS') {
@@ -24,6 +33,22 @@ pipeline {
 				withSonarQubeEnv('SonarQube') {
 					sh 'mvn sonar:sonar'
 				}
+			}
+		}
+		stage('START APPLICATION') {
+			steps {
+				sh '''
+					nohup mcn spring-boot:run \
+						-Dspring-boot.run.arguments=--server.port=8081 \
+						> app.log 2>&1 & 
+						slepp 25
+				'''
+			}
+		}
+
+		stage('SELENIUM TESTS') {
+			steps {
+				sh 'mvn test'
 			}
 		}
 
