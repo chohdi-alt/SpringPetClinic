@@ -19,6 +19,13 @@ pipeline {
 				sh 'mvn clean test'
 			}
 		}
+		stage('SOANRQUBE ANALYSIS') {
+			steps {
+				withSonarQubeEnv('SonarQube') {
+					sh 'mvn sonar:sonar'
+				}
+			}
+		}
 
 		stage('END') {
 			steps {
