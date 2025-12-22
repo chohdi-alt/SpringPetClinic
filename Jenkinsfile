@@ -96,6 +96,30 @@ pipeline {
             }
         }
 
+	stage('KUBERNETES DEPLOY') {
+    	steps {
+        	echo 'Deploying application to Kubernetes (Minikube)'
+
+        	sh '''
+        	echo "Checking Minikube status..."
+        	minikube status
+
+        	echo "Applying Kubernetes manifests..."
+        	kubectl apply -f k8s-deployment.yaml
+        	kubectl apply -f k8s-service.yaml
+
+        	echo "Restarting pods to pull latest image..."
+        	kubectl delete pod -l app=springpetclinic || true
+
+        	echo "Waiting for pods to be ready..."
+        	kubectl rollout status deployment/springpetclinic --timeout=120s
+
+        	echo "Deployment completed successfully"
+        	'''
+	    	}
+	}
+	
+
         stage('STOP APPLICATION') {
             steps {
                 sh 'pkill -f spring-boot || true'
