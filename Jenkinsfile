@@ -103,8 +103,8 @@ pipeline {
         	
         	echo "Loading Docker image into Minikube"
         	
-        	kubectl apply -f k8s-deployment.yaml
-        	kubectl apply -f k8s-service.yaml
+        	kubectl apply --validate=false -f k8s-deployment.yaml
+        	kubectl apply --validate=false -f k8s-service.yaml
 
         	kubectl rollout status deployment/springpetclinic
         	'''
