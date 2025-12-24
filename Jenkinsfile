@@ -102,7 +102,8 @@ pipeline {
         	echo "Starting Minikube if needed"
         	
         	echo "Loading Docker image into Minikube"
-        	
+		
+		export KUBECONFIG=/var/lib/jenkins/.kune/config        	
         	kubectl apply --validate=false -f k8s-deployment.yaml
         	kubectl apply --validate=false -f k8s-service.yaml
 
