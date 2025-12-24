@@ -100,11 +100,9 @@ pipeline {
     steps {
         sh '''
         	echo "Starting Minikube if needed"
-        	minikube status || minikube start --driver=docker
-
+        	
         	echo "Loading Docker image into Minikube"
-        	minikube image load springpetclinic:latest
-
+        	
         	kubectl apply -f k8s-deployment.yaml
         	kubectl apply -f k8s-service.yaml
 
